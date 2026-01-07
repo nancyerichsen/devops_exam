@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-script
+  namespace: staging
+data:
+  init.sql: |
+    -- Users table
+    CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        pw TEXT NOT NULL
+    );
+
+    -- Notes table
+    CREATE TABLE IF NOT EXISTS notes (
+        "user" TEXT NOT NULL,
+        timestamp TEXT NOT NULL,
+        note TEXT NOT NULL,
+        note_id TEXT PRIMARY KEY
+    );
+
+    -- Images table
+    CREATE TABLE IF NOT EXISTS images (
+        uid TEXT PRIMARY KEY,
+        "owner" TEXT NOT NULL,
+        name TEXT NOT NULL,
+        timestamp TEXT NOT NULL
+    );
+
+    INSERT INTO users (id, pw) VALUES
+      ('ADMIN', '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918'),
+      ('ADAM',  '9d053755e078005ef63af6258f5a743994a11d17daca304d49dec6c3ded3fba8'),
+      ('TEST',  '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08');

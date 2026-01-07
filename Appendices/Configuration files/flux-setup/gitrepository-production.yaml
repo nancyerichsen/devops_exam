@@ -1,0 +1,12 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: flask-repo-production
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: https://gitlab.internal.uia.no/ikt206-g-25v-devops/Group22/flask.git
+  ref:
+    branch: flux-setup-production
+  secretRef:
+    name: gitlab-auth

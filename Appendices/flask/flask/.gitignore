@@ -1,0 +1,37 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+flaskenv/
+
+# dotenv environment variables (optional, if you use .env)
+.env
+
+# Python virtual environment settings (optional)
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Flask cache and instance folders
+instance/
+.webassets-cache
+
+# Pytest cache
+.pytest_cache/
+
+# VSCode settings (optional, for developers using VSCode)
+.vscode/
+
+# macOS junk files
+.DS_Store
+
+# Linux junk files
+*.swp
+*~
+
+# Coverage reports
+htmlcov/
+.coverage
+coverage.xml

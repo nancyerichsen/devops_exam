@@ -1,0 +1,171 @@
+stages:
+  - test
+  - build
+  - publish
+
+unit-test:
+  stage: test
+  image: python:3.10
+  before_script:
+    - python -m venv venv
+    - . venv/bin/activate
+    - pip install -r requirements.txt
+  script:
+    - echo "Running unit tests"
+    - pytest -v tests/unit --junitxml=unit-report.xml
+  artifacts:
+    when: always
+    paths:
+      - unit-report.xml
+    reports:
+      junit: unit-report.xml
+  rules:
+    - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
+      when: always
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+
+
+integration-test:
+  stage: test
+  image: python:3.10
+  before_script:
+    - python -m venv venv
+    - . venv/bin/activate
+    - pip install -r requirements.txt
+  script:
+    - echo "Running integration tests"
+    - pytest -v tests/integration --junitxml=integration-report.xml
+  artifacts:
+    when: always
+    paths:
+      - integration-report.xml
+    reports:
+      junit: integration-report.xml
+  rules:
+    - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
+      when: always
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+
+e2e-test:
+  stage: test
+  image: python:3.10
+  before_script:
+    - python -m venv venv
+    - . venv/bin/activate
+    - pip install -r requirements.txt
+    - playwright install --with-deps
+  script:
+    - echo "Launching test server"
+    - python run_test_server.py &
+    - until curl -s http://localhost:5001/ > /dev/null; do echo "Waiting for server..."; sleep 1; done
+    - pytest -v tests/e2e --junitxml=e2e-report.xml
+  artifacts:
+    when: always
+    paths:
+      - e2e-report.xml
+    reports:
+      junit: e2e-report.xml
+  rules:
+    - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
+      when: always
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    
+
+docker-build:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
+  script:
+    - |
+      IMAGE_TAG="${CI_COMMIT_SHORT_SHA}"      
+      DESTINATIONS="\
+        --destination registry.internal.uia.no/ikt206-g-25v-devops/group22/flask:$IMAGE_TAG \
+        --destination registry.internal.uia.no/ikt206-g-25v-devops/group22/flask:latest"
+      
+
+      echo "Kaniko will push to:"
+      echo "$DESTINATIONS"
+
+      /kaniko/executor \
+        --context "$CI_PROJECT_DIR" \
+        --dockerfile "$CI_PROJECT_DIR/Dockerfile" \
+        $DESTINATIONS
+  rules:
+  - if: '$CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"'
+    when: always
+  - when: never
+
+
+update-staging-manifest:
+  stage: publish
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache git sed
+    - git config --global user.email "ci2@example.com"
+    - git config --global user.name "gitlab-ci"
+    - echo ${CI_PUSH_AUTO_KEY}
+    - echo ${CI_PUSH_AUTO_USER}
+    - git remote set-url origin "https://${CI_PUSH_AUTO_USER}:${CI_PUSH_AUTO_KEY}@gitlab.internal.uia.no/ikt206-g-25v-devops/Group22/flask.git"
+
+  script:
+    - TAG="${CI_COMMIT_SHORT_SHA}"
+    - echo $TAG
+    - git fetch origin
+
+    # Step 1: Delete remote and local `flux-setup-staging` if they exist
+    - git push origin --delete flux-setup-staging || echo "Remote branch did not exist"
+    - git branch -D flux-setup-staging || echo "Local branch did not exist"
+
+    # Step 2: Create fresh `flux-setup-staging` from `main`
+    - git checkout -b flux-setup-staging origin/main
+
+    # Step 3: Update image tag
+    - echo "Updating image tag to $TAG"
+    - 'sed -i "s|image: .*|image: registry.internal.uia.no/ikt206-g-25v-devops/group22/flask:$TAG|" k8s/staging/flask/flask-deployment.yaml'
+
+    # Step 4: Commit and push
+    - git add k8s/staging/flask/flask-deployment.yaml
+    - 'git commit -m "CI: Oppdaterer image-tag til $TAG for staging" || echo "No changes"'
+    - git push origin flux-setup-staging
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"'
+      when: always
+    - when: never
+
+update-production-manifest:
+  stage: publish
+  image: alpine:latest
+  when: manual
+  manual_confirmation: 'Are you sure you want to push this new image to production?'
+  before_script:
+    - apk add --no-cache git sed
+    - git config --global user.email "ci2@example.com"
+    - git config --global user.name "gitlab-ci"
+    - echo ${CI_PUSH_AUTO_KEY}
+    - echo ${CI_PUSH_AUTO_USER}
+    - git remote set-url origin "https://${CI_PUSH_AUTO_USER}:${CI_PUSH_AUTO_KEY}@gitlab.internal.uia.no/ikt206-g-25v-devops/Group22/flask.git"
+
+  script:
+    - TAG="${CI_COMMIT_SHORT_SHA}"
+    - git fetch origin
+
+    # Step 1: Delete remote and local `flux-setup-production` if they exist
+    - git push origin --delete flux-setup-production || echo "Remote branch did not exist"
+    - git branch -D flux-setup-production || echo "Local branch did not exist"
+
+    # Step 2: Create fresh `flux-setup-ci` from `main`
+    - git checkout -b flux-setup-production origin/main
+    # Step 3: Update image tag
+    - echo "Updating image tag to $TAG"
+    - 'sed -i "s|image: .*|image: registry.internal.uia.no/ikt206-g-25v-devops/group22/flask:$TAG|" k8s/production/flask/flask-deployment-production.yaml'
+
+    # Step 4: Commit and push
+    - git add k8s/production/flask/flask-deployment-production.yaml
+    - 'git commit -m "CI: Oppdaterer image-tag til $TAG for production" || echo "No changes"'
+    - git push origin flux-setup-production
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"'
+      when: manual
+    - when: never
+

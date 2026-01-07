@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gitlab-auth
+  namespace: flux-system
+stringData:
+  username: flux-ci-access
+  password: REDACTED
+type: kubernetes.io/basic-auth
