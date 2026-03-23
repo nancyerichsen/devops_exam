@@ -1,0 +1,17 @@
+##Individual Report – Nancy Erichsen
+
+At the beginning of this DevOps project, I contributed by evaluating the current
+development process at Auby and Brich Finance, using the background information
+provided in the assignment. I also co-created an initial draft of the presentation with a
+fellow student. The presentation was later revised multiple times by other team
+members.
+I was primarily responsible for developing and testing the Kubernetes YAML files,
+enabling the application to run in a Kubernetes cluster with PostgreSQL and fetch
+Docker images from GitLab. This also included setting up namespaces, configuring an
+init-db file, defining secrets, and creating the necessary services for the components to
+communicate properly within the cluster.
+Additionally, I wrote parts of the setup guide and process documentation, particularly
+related to the Kubernetes setup and its functionality. Toward the end, I contributed to the
+final presentation set up and recorded my section for the audio used in the presentation.
+Like the other group members, I actively participated in meetings where we made joint
+decisions and worked together to find effective solutions for the project.
