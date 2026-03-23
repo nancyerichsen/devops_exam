@@ -1,5 +1,5 @@
 # devops_exam
-In the fourth semester of my studies at University in Adger, we had an exciting subject "DevOps". This repository is what was delivered as the exam submission. The only thing removed are the individual reports from the other team members.
+In the fourth semester of my studies at University in Adger, we had a subject "DevOps". This repository is what was delivered as the exam submission. The only thing removed are the individual reports from the other team members.
 
 ## Exam requirements
 
@@ -70,7 +70,3 @@ As stated before, you will find our exam submission. This consists of:
   * the configured flask application with tests
   * My individual report detailing how I contributed to the project
   * Configuration files needed for the solution
-
- ## Evaluation
-
- We got an A for this project, so we are quite satisfied with that. Kubernetes was very new for us, as we had more experience with Docker. However, it was very interesting to configure the flask application for tests (especially e2e tests), and work with GitLab its CI/CD functionality. If we were to redo this project, we would spend more time on how to convert the application to a binary so that application code is restricted to the development environment rather storing source code in the container environment.
